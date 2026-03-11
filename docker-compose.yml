@@ -1,0 +1,31 @@
+services:
+  # ---------------------------------------------------------
+  # ELASTICSEARCH: Hybrid Database (Text + Vectors)
+  # ---------------------------------------------------------
+  elasticsearch:
+    # Official image with native kNN support
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    
+    container_name: elasticsearch
+    
+    environment:
+      # Single-node configuration for local development
+      - discovery.type=single-node
+      
+      # Security disabled for simplified local access
+      - xpack.security.enabled=false
+      
+      # JVM Heap size configuration (4GB)
+      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+    
+    # REST API communication port
+    ports:
+      - "9200:9200"
+    
+    # Data persistence mapping
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+# Named volume for persistent storage
+volumes:
+  es_data:
