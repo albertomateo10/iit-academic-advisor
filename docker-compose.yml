@@ -12,8 +12,14 @@ services:
       # Single-node configuration for local development
       - discovery.type=single-node
       
-      # Security disabled for simplified local access
-      - xpack.security.enabled=false
+      # Enable the security system (will require credentials)
+      - xpack.security.enabled=true
+      
+      # Disable SSL for HTTP connections (allows using http://localhost:9200)
+      - xpack.security.http.ssl.enabled=false
+
+      # Assign the password to the default user named "elastic"
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       
       # JVM Heap size configuration (4GB)
       - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
