@@ -5,3 +5,7 @@ crawl4ai
 playwright
 urllib3<2
 dotenv
+langchain 
+langchain-experimental 
+langchain-huggingface
+sentence-transformers

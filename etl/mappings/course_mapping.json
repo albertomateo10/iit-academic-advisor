@@ -1,0 +1,17 @@
+{
+    "mappings": {
+        "properties": {
+            "course_id": { "type": "keyword" },
+            "course_name": { "type": "text" },
+            "description": { "type": "text" },
+            "credits": { "type": "keyword" },
+            "prerequisites": { "type": "keyword" },
+            "description_vector": {
+                "type": "dense_vector",
+                "dims": 1024,
+                "index": true,
+                "similarity": "cosine"
+            }
+        }
+    }
+}

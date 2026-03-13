@@ -1,0 +1,16 @@
+{
+    "mappings": {
+        "properties": {
+            "chunk_id": { "type": "keyword" },
+            "document_type": { "type": "keyword" },
+            "tab_name": { "type": "keyword" },
+            "content_markdown": { "type": "text" },
+            "content_vector": {
+                "type": "dense_vector",
+                "dims": 1024,
+                "index": true,
+                "similarity": "cosine"
+            }
+        }
+    }
+}
