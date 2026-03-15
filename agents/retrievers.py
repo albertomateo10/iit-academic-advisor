@@ -37,7 +37,7 @@ def search_courses(query: str, required_credits: str = None, top_k: int = 3):
                 {
                     "multi_match": {
                         "query": query,
-                        "fields": ["course_name^2", "description"],
+                        "fields": ["course_id^5","course_name^2", "description"],
                         "boost": 0.3 
                     }
                 }
@@ -67,7 +67,8 @@ def search_courses(query: str, required_credits: str = None, top_k: int = 3):
         course_info = (
             f"Course: {source.get('course_id')} - {source.get('course_name')}\n"
             f"Credits: {source.get('credits')}\n"
-            f"Prerequisites: {', '.join(source.get('prerequisites', [])) or 'None'}\n"
+            f"Prerequisite Course Codes: {', '.join(source.get('prerequisites', [])) or 'None'}\n"
+            f"Prerequisite Details: {source.get('prerequisites_raw', 'None')}\n"
             f"Description: {source.get('description')}\n"
             f"Relevance Score: {score:.2f}\n"
         )
@@ -75,11 +76,11 @@ def search_courses(query: str, required_credits: str = None, top_k: int = 3):
 
     return "\n---\n".join(results) if results else "No matching courses found."
 
-if __name__ == "__main__":
-    print("Testing Hybrid Search...")
-    print("\n[Query: 'courses about protecting networks from hackers']")
-    print(search_courses("courses about protecting networks from hackers"))
+# if __name__ == "__main__":
+#     print("Testing Hybrid Search...")
+#     print("\n[Query: 'courses about protecting networks from hackers']")
+#     print(search_courses("courses about protecting networks from hackers"))
     
-    # Example 2: Semantic + Symbolic Filter
-    print("\n[Query: 'courses about protecting networks', Filter: 3 credits]")
-    print(search_courses("courses about protecting networks", required_credits="3"))
+#     # Example 2: Semantic + Symbolic Filter
+#     print("\n[Query: 'courses about protecting networks', Filter: 3 credits]")
+#     print(search_courses("courses about protecting networks", required_credits="3"))

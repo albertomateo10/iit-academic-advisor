@@ -86,6 +86,7 @@ def run_ingestion():
             "description": desc_text,
             "credits": str(course.get("credits", "0")),
             "prerequisites": course.get("prerequisites", []),
+            "prerequisites_raw": course.get("prerequisites_raw", "None"),
             "description_vector": vector
         }
         
