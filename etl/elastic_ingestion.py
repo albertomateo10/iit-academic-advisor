@@ -16,12 +16,12 @@ ELASTIC_PASSWORD = os.getenv("ELASTIC_PASSWORD")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Define absolute paths for mappings
-COURSE_MAPPING_PATH = os.path.join(BASE_DIR, "etl", "mappings", "course_mapping.json")
-POLICY_MAPPING_PATH = os.path.join(BASE_DIR, "etl", "mappings", "policy_mapping.json")
+COURSE_MAPPING_PATH = os.path.join(BASE_DIR, "mappings", "course_mapping.json")
+POLICY_MAPPING_PATH = os.path.join(BASE_DIR, "mappings", "policy_mapping.json")
 
 # Define absolute paths for scraped data (going up one level to the root, then into data/scraped)
-COURSES_DATA_PATH = os.path.join(BASE_DIR, "data", "scraped", "iit_courses.json")
-POLICIES_DATA_PATH = os.path.join(BASE_DIR, "data", "scraped", "itm_policies.json")
+COURSES_DATA_PATH = os.path.join(BASE_DIR, "..", "data", "scraped", "iit_courses.json")
+POLICIES_DATA_PATH = os.path.join(BASE_DIR, "..", "data", "scraped", "itm_policies.json")
 
 def load_json_schema(filepath):
     """Utility function to load external JSON mapping files."""
