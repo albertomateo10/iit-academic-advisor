@@ -10,3 +10,4 @@ langchain-experimental
 langchain-huggingface
 sentence-transformers
 langchain-groq
+streamlit

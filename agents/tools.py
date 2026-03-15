@@ -2,8 +2,7 @@ from typing_extensions import Optional
 
 from langchain_core.tools import tool
 # Import the raw Python function we just wrote and tested
-from retrievers import search_courses 
-
+from agents.retrievers import search_courses
 @tool
 def search_iit_courses_tool(query: str, required_credits: Optional[str] = None) -> str:
     """
