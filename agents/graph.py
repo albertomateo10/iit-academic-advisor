@@ -95,30 +95,30 @@ advisor_agent = workflow.compile()
 
 
 
-if __name__ == "__main__":
-    print("Welcome to the IIT Proactive Advisor CLI!")
+# if __name__ == "__main__":
+#     print("Welcome to the IIT Proactive Advisor CLI!")
     
-    # Initialize an empty state for a new student
-    initial_state = {
-        "messages": [],
-        "completed_courses": [],
-        "current_gpa": 4.0,
-        "awaiting_prereq_confirmation": False
-    }
+#     # Initialize an empty state for a new student
+#     initial_state = {
+#         "messages": [],
+#         "completed_courses": [],
+#         "current_gpa": 4.0,
+#         "awaiting_prereq_confirmation": False
+#     }
     
-    while True:
-        user_input = input("\nYou: ")
-        if user_input.lower() in ["quit", "exit"]:
-            break
+#     while True:
+#         user_input = input("\nYou: ")
+#         if user_input.lower() in ["quit", "exit"]:
+#             break
             
-        initial_state["messages"].append(HumanMessage(content=user_input))
+#         initial_state["messages"].append(HumanMessage(content=user_input))
         
-        # Run the LangGraph state machine
-        result = advisor_agent.invoke(initial_state)
+#         # Run the LangGraph state machine
+#         result = advisor_agent.invoke(initial_state)
         
-        # Get the final response from the agent
-        final_message = result["messages"][-1].content
-        print(f"\nAdvisor: {final_message}")
+#         # Get the final response from the agent
+#         final_message = result["messages"][-1].content
+#         print(f"\nAdvisor: {final_message}")
         
-        # Update our running state
-        initial_state["messages"] = result["messages"]
+#         # Update our running state
+#         initial_state["messages"] = result["messages"]

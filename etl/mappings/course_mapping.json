@@ -5,6 +5,8 @@
             "course_name": { "type": "text" },
             "description": { "type": "text" },
             "credits": { "type": "keyword" },
+            "lecture_hours": { "type": "integer" },
+            "lab_hours": { "type": "integer" },
             "prerequisites": { "type": "keyword" },
             "prerequisites_raw": { "type": "text" }, 
             "description_vector": {

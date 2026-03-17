@@ -66,9 +66,9 @@ def search_courses(query: str, required_credits: str = None, top_k: int = 3):
         score = hit["_score"]
         course_info = (
             f"Course: {source.get('course_id')} - {source.get('course_name')}\n"
-            f"Credits: {source.get('credits')}\n"
-            f"Prerequisite Course Codes: {', '.join(source.get('prerequisites', [])) or 'None'}\n"
-            f"Prerequisite Details: {source.get('prerequisites_raw', 'None')}\n"
+            f"Credits: {source.get('credits')} (Lecture Hours: {source.get('lecture_hours')}, Lab Hours: {source.get('lab_hours')})\n"            
+            f"Required Course Codes: {', '.join(source.get('prerequisites', [])) or 'none'}\n"
+            f"Prerequisite Details: {source.get('prerequisites_raw', 'none')}\n"
             f"Description: {source.get('description')}\n"
             f"Relevance Score: {score:.2f}\n"
         )

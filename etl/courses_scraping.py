@@ -40,41 +40,66 @@ async def scrape_courses(url: str, crawler: AsyncWebCrawler):
         return None
 
 def clean_course_data(raw_data):
-    """Parses raw text into strict formats, capturing labs, lectures, and variable credits."""
+    """Parses raw text into strict formats, capturing labs, lectures, variable credits, and cleaning typography."""
+    
+    # --- INTERNAL HELPER: Advanced Text Cleaning ---
+    def advanced_clean(text):
+        if not text or not isinstance(text, str):
+            return ""
+        
+        # 1. Replace Unicode non-breaking spaces (\u00a0 or \xa0) and line breaks (\n, \r)
+        text = text.replace('\xa0', ' ').replace('\u00a0', ' ')
+        text = text.replace('\n', ' ').replace('\r', ' ')
+        
+        # 2. Add space between lowercase and uppercase letters (e.g., "bothMATH" -> "both MATH")
+        text = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
+        
+        # 3. Add space between digits and letters (e.g., "611with" -> "611 with")
+        text = re.sub(r'(\d)([a-zA-Z])', r'\1 \2', text)
+        
+        # 4. Add space between letters and digits (e.g., "MATH522" -> "MATH 522")
+        text = re.sub(r'([a-zA-Z])(\d)', r'\1 \2', text)
+        
+        # 5. Normalize multiple spaces into a single one and trim whitespace from both ends
+        text = re.sub(r'\s+', ' ', text).strip()
+        
+        return text
+
     cleaned_data = []
     if not raw_data: 
         return cleaned_data
         
     for course in raw_data:
-        code = course.get("course_code", "").replace("\xa0", " ").strip()
-        title = course.get("course_title", "").strip()
-        desc = course.get("description", "").strip()
+        # Apply the advanced cleaning helper to all extracted fields
+        code = advanced_clean(course.get("course_code", ""))
+        title = advanced_clean(course.get("course_title", ""))
+        desc = advanced_clean(course.get("description", ""))
+        prereqs_raw = advanced_clean(course.get("prereqs_raw", ""))
+        credits_raw = advanced_clean(course.get("credits", ""))
         
-        # --- NEW: PARSE LECTURE, LAB, AND CREDITS ---
-        # The raw string might be "LECTURE: 3 LAB: 0 CREDITS: 3" or "CREDIT: Variable"
-        credits_raw = course.get("credits", "").strip()
+        # --- PARSE LECTURE, LAB, AND CREDITS ---
         
-        # 1. Parse Lecture Hours (Default to 0 if not found)
+        # 1. Parse Lecture Hours (Defaults to 0 if not found)
         lecture_match = re.search(r'Lecture:\s*(\d+)', credits_raw, re.IGNORECASE)
         lecture_hours = int(lecture_match.group(1)) if lecture_match else 0
         
-        # 2. Parse Lab Hours (Default to 0 if not found)
+        # 2. Parse Lab Hours (Defaults to 0 if not found)
         lab_match = re.search(r'Lab:\s*(\d+)', credits_raw, re.IGNORECASE)
         lab_hours = int(lab_match.group(1)) if lab_match else 0
         
-        # 3. Parse Credits (Handles both integers and "Variable")
-        # The regex looks for "Credit:" or "Credits:" followed by digits OR the word "Variable"
+        # 3. Parse Credits (Handles both integers and "Variable" string)
         credit_match = re.search(r'Credit(?:s)?:\s*(\d+|Variable)', credits_raw, re.IGNORECASE)
         
         if credit_match:
             extracted_credit = credit_match.group(1)
-            # If it is a number, convert to int. If it is "Variable", keep the string "Variable"
+            # If numeric, convert to int; if "Variable", capitalize correctly
             final_credits = int(extracted_credit) if extracted_credit.isdigit() else extracted_credit.title()
         else:
-            final_credits = 0 # Absolute fallback
+            final_credits = 0 # Safety fallback
             
-        # Parse Prerequisites...
-        prereqs_raw = course.get("prereqs_raw", "").replace("\xa0", " ").strip()
+        # --- PARSE PREREQUISITES ---
+        # Since prereqs_raw is now cleaned and correctly spaced (e.g., "MATH 101"), 
+        # the regex pattern becomes more reliable.
         prereqs_list = re.findall(r'[A-Z]{3,4}\s\d{3,4}', prereqs_raw)
         unique_prereqs = list(set(prereqs_list))
 
@@ -84,7 +109,7 @@ def clean_course_data(raw_data):
             "description": desc,
             "lecture_hours": lecture_hours,
             "lab_hours": lab_hours,
-            "credits": final_credits,             # Now holds 3, 1, or "Variable"
+            "credits": final_credits,
             "prerequisites": unique_prereqs,
             "prerequisites_raw": prereqs_raw
         })
@@ -124,7 +149,7 @@ async def safe_catalog_etl(urls: list[str]):
             all_courses.extend(cleaned_courses)
             
             if index < len(urls) - 1:
-                delay = random.uniform(3.5, 5.0)
+                delay = random.uniform(2.5, 5.0)
                 print(f"Sleeping for {delay:.2f} seconds to avoid rate limiting...\n")
                 await asyncio.sleep(delay)
                 
@@ -134,7 +159,49 @@ async def main():
     # Example list of department URLs
     department_urls = [
         "https://catalog.iit.edu/graduate/courses/arch/",
-        "https://catalog.iit.edu/graduate/courses/biol/"  # Commented out to keep the test quick
+        "https://catalog.iit.edu/graduate/courses/biol/",
+        "https://catalog.iit.edu/graduate/courses/bme/",
+        "https://catalog.iit.edu/graduate/courses/bus/",
+        "https://catalog.iit.edu/graduate/courses/che/",
+        "https://catalog.iit.edu/graduate/courses/chem/",
+        "https://catalog.iit.edu/graduate/courses/cae/",
+        "https://catalog.iit.edu/graduate/courses/com/",
+        "https://catalog.iit.edu/graduate/courses/cs/",
+        "https://catalog.iit.edu/graduate/courses/csp/",
+        "https://catalog.iit.edu/graduate/courses/ece/",
+        "https://catalog.iit.edu/graduate/courses/enve/",
+        "https://catalog.iit.edu/graduate/courses/ems/",
+        "https://catalog.iit.edu/graduate/courses/fdsn/",
+        "https://catalog.iit.edu/graduate/courses/engr/",
+        "https://catalog.iit.edu/graduate/courses/hist/",
+        "https://catalog.iit.edu/graduate/courses/hum/",
+        "https://catalog.iit.edu/graduate/courses/intm/",
+        "https://catalog.iit.edu/graduate/courses/idn/",
+        "https://catalog.iit.edu/graduate/courses/idx/",
+        "https://catalog.iit.edu/graduate/courses/itmd/",
+        "https://catalog.iit.edu/graduate/courses/itmm/",
+        "https://catalog.iit.edu/graduate/courses/itmo/",
+        "https://catalog.iit.edu/graduate/courses/itms/",
+        "https://catalog.iit.edu/graduate/courses/itmt/",
+        "https://catalog.iit.edu/graduate/courses/la/",
+        "https://catalog.iit.edu/graduate/courses/msc/",
+        "https://catalog.iit.edu/graduate/courses/max/",
+        "https://catalog.iit.edu/graduate/courses/msf/",
+        "https://catalog.iit.edu/graduate/courses/math/",
+        "https://catalog.iit.edu/graduate/courses/mba/",
+        "https://catalog.iit.edu/graduate/courses/mmae/",
+        "https://catalog.iit.edu/graduate/courses/phil/",
+        "https://catalog.iit.edu/graduate/courses/phys/",
+        "https://catalog.iit.edu/graduate/courses/psyc/",
+        "https://catalog.iit.edu/graduate/courses/pa/",
+        "https://catalog.iit.edu/graduate/courses/sci/",
+        "https://catalog.iit.edu/graduate/courses/sens/",
+        "https://catalog.iit.edu/graduate/courses/ssci/",
+        "https://catalog.iit.edu/graduate/courses/stat/",
+        "https://catalog.iit.edu/graduate/courses/ssb/",
+        "https://catalog.iit.edu/graduate/courses/sam/",
+        "https://catalog.iit.edu/graduate/courses/smgt/",
+        "https://catalog.iit.edu/graduate/courses/tech/"
     ]
     
     # 1. Run the safe ETL process

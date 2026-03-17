@@ -2,69 +2,242 @@ import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
 import os
 import sys
-# Import your compiled LangGraph agent from your agents folder
+
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if root_dir not in sys.path:
     sys.path.append(root_dir)
 
 from agents.graph import advisor_agent
 
-# --- PAGE CONFIGURATION ---
+# ─────────────────────────────────────────────
+# PAGE CONFIGURATION
+# ─────────────────────────────────────────────
 st.set_page_config(
     page_title="IIT Academic Advisor",
-    page_icon="🎓",
-    layout="centered"
+    page_icon="🦅",
+    layout="centered",
+    initial_sidebar_state="collapsed",
 )
 
-st.title("🎓 IIT Proactive Academic Advisor")
-st.markdown("Welcome! I can help you find courses, check prerequisites, and plan your ITM degree.")
+# ─────────────────────────────────────────────
+# CSS
+# ─────────────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-# --- SESSION STATE INITIALIZATION ---
-# This ensures the LangGraph memory survives when Streamlit reruns the page
+:root {
+    --iit-red:      #C00000;
+    --iit-red-dark: #8B0000;
+    --radius:       16px;
+}
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Hide default Streamlit chrome */
+#MainMenu, footer, header { visibility: hidden; }
+
+/* Remove default block padding */
+.block-container {
+    padding-top: 0.3rem !important;
+    padding-bottom: 5rem !important;
+    max-width: 780px !important;
+}
+
+/* ── Header ── */
+.iit-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-bottom: 0.9rem;
+    border-bottom: 2px solid var(--iit-red);
+    margin-bottom: 1.2rem;
+}
+.iit-header-icon { font-size: 2.4rem; line-height: 1; margin-bottom: 0.35rem; }
+.iit-header-text h1 {
+    margin: 0;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--iit-red);
+    line-height: 1.2;
+}
+.iit-header-text p {
+    margin: 0;
+    font-size: 1.1rem;
+    opacity: 0.7;
+}
+
+/* Dark mode header */
+[data-theme="dark"] .iit-header-text h1 { color: #e85c5c; }
+[data-theme="dark"] .iit-header         { border-bottom-color: var(--iit-red-dark); }
+
+/* ── Message rows ── */
+.msg-row {
+    display: flex;
+    width: 100%;
+    margin-bottom: 0.6rem;
+    animation: fadeUp 0.2s ease;
+}
+.msg-row.user      { justify-content: flex-start; }
+.msg-row.assistant { justify-content: flex-end; }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Avatar ── */
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    margin-top: 3px;
+}
+.avatar.user-av { background: #555; color: #fff; margin-right: 8px; }
+.avatar.bot-av  { background: var(--iit-red); color: #fff; margin-left: 8px; }
+
+/* ── Bubble ── */
+.bubble {
+    max-width: 70%;
+    padding: 0.6rem 0.95rem;
+    border-radius: var(--radius);
+    font-size: 0.88rem;
+    line-height: 1.55;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+/* Light mode */
+.bubble.user-b {
+    background: #dce8f5;
+    color: #1a1a1a;
+    border-bottom-left-radius: 4px;
+}
+.bubble.bot-b {
+    background: var(--iit-red);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+/* Dark mode */
+[data-theme="dark"] .bubble.user-b {
+    background: #2e2e2e;
+    color: #e8e8e8;
+}
+[data-theme="dark"] .bubble.bot-b {
+    background: var(--iit-red-dark);
+    color: #fff;
+}
+
+/* ── Chat input ── */
+[data-testid="stChatInput"] textarea,
+[data-testid="stChatInput"] textarea:focus,
+[data-testid="stChatInput"] textarea:focus-visible,
+[data-testid="stChatInput"] *:focus,
+[data-testid="stChatInput"] *:focus-visible {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+[data-testid="stChatInput"] > div {
+    border-radius: 24px !important;
+    border: none !important;
+    box-shadow: none !important;
+    transition: box-shadow 0.2s ease !important;
+}
+[data-testid="stChatInput"]:focus-within > div {
+    box-shadow: 0 0 0 2px var(--iit-red) !important;
+}
+[data-testid="stChatInput"] button {
+    background: var(--iit-red) !important;
+    border-radius: 50% !important;
+    color: #fff !important;
+}
+
+/* ── Spinner ── */
+[data-testid="stSpinner"] > div {
+    border-top-color: var(--iit-red) !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────
+# SESSION STATE
+# ─────────────────────────────────────────────
 if "agent_state" not in st.session_state:
     st.session_state.agent_state = {
         "messages": [],
         "completed_courses": [],
         "current_gpa": 4.0,
-        "awaiting_prereq_confirmation": False
+        "awaiting_prereq_confirmation": False,
     }
 
-# --- RENDER CHAT HISTORY ---
-# We loop through the messages in the LangGraph state and display them.
+# ─────────────────────────────────────────────
+# HEADER
+# ─────────────────────────────────────────────
+st.markdown("""
+<div class="iit-header">
+    <div class="iit-header-text">
+        <h1>🦅 ITM Academic Advisor &mdash; Illinois Tech</h1>
+        <p>Ask me about courses, prerequisites, or your degree roadmap.</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────
+# RENDER CHAT HISTORY
+# ─────────────────────────────────────────────
 for msg in st.session_state.agent_state["messages"]:
-    # We only want to show the Human and AI messages to the user.
-    # We HIDE the System messages and Tool outputs so the UI stays clean!
     if isinstance(msg, HumanMessage):
-        with st.chat_message("user"):
-            st.write(msg.content)
+        st.markdown(f"""
+        <div class="msg-row user">
+            <div class="avatar user-av"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg></div>
+            <div class="bubble user-b">{msg.content}</div>
+        </div>
+        """, unsafe_allow_html=True)
     elif isinstance(msg, AIMessage) and msg.content:
-        # Some AI messages are just blank tool calls. We only render ones with text.
-        with st.chat_message("assistant"):
-            st.write(msg.content)
+        st.markdown(f"""
+        <div class="msg-row assistant">
+            <div class="bubble bot-b">{msg.content}</div>
+            <div class="avatar bot-av">🦅</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-# --- HANDLE NEW USER INPUT ---
-# st.chat_input creates the text box at the bottom of the screen
-if prompt := st.chat_input("Ask me about IIT courses..."):
-    
-    # 1. Display the user's message immediately in the UI
-    with st.chat_message("user"):
-        st.write(prompt)
+# ─────────────────────────────────────────────
+# CHAT INPUT
+# ─────────────────────────────────────────────
+if prompt := st.chat_input("Ask me about IIT courses, prerequisites, or your degree plan…"):
 
-    # 2. Add the user's message to our LangGraph state
+    # Show user bubble immediately
+    st.markdown(f"""
+    <div class="msg-row user">
+        <div class="avatar user-av">🧑‍🎓</div>
+        <div class="bubble user-b">{prompt}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Update LangGraph state
     st.session_state.agent_state["messages"].append(HumanMessage(content=prompt))
 
-    # 3. Trigger the LangGraph Agent
-    with st.spinner("Searching the IIT catalog..."):
-        # We pass the current state into the graph and get the updated state back
+    # Invoke agent
+    with st.spinner("Searching the IIT catalog…"):
         new_state = advisor_agent.invoke(st.session_state.agent_state)
-        
-        # Overwrite our Streamlit state with the new LangGraph state (which includes the AI's reply)
         st.session_state.agent_state = new_state
 
-        # 4. Display the AI's response in the UI
-        # The AI's final answer is always the last message in the list
-        final_message = new_state["messages"][-1]
-        
-        if isinstance(final_message, AIMessage) and final_message.content:
-            with st.chat_message("assistant"):
-                st.write(final_message.content)
+    # Show AI response bubble
+    final_message = new_state["messages"][-1]
+    if isinstance(final_message, AIMessage) and final_message.content:
+        st.markdown(f"""
+        <div class="msg-row assistant">
+            <div class="bubble bot-b">{final_message.content}</div>
+            <div class="avatar bot-av">🦅</div>
+        </div>
+        """, unsafe_allow_html=True)
