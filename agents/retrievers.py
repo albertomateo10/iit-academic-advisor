@@ -76,6 +76,51 @@ def search_courses(query: str, required_credits: str = None, top_k: int = 3):
 
     return "\n---\n".join(results) if results else "No matching courses found."
 
+
+def search_policies(query: str, top_k: int = 2):
+    """
+    Executes a Hybrid Search for IIT academic policies.
+    """
+    query_vector = embedder.embed_query(query)
+
+    knn_query = {
+        "field": "content_vector",
+        "query_vector": query_vector,
+        "k": top_k,
+        "num_candidates": 50,
+        "boost": 0.7,
+    }
+
+    text_query = {
+        "bool": {
+            "should": [
+                {
+                    "multi_match": {
+                        "query": query,
+                        "fields": ["tab_name^10","content_markdown^2"],
+                        "boost": 0.3,
+                    }
+                }
+            ]
+        }
+    }
+
+    response = es.search(
+        index="iit_policies",
+        knn=knn_query,
+        query=text_query,
+        size=top_k,
+    )
+
+    results = []
+    for hit in response["hits"]["hits"]:
+        source = hit["_source"]
+        results.append(
+            f"[{source.get('tab_name', 'Policy')}]\n{source.get('content_markdown', '')}"
+        )
+
+    return "\n---\n".join(results) if results else "No matching policies found."
+
 # if __name__ == "__main__":
 #     print("Testing Hybrid Search...")
 #     print("\n[Query: 'courses about protecting networks from hackers']")

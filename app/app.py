@@ -1,5 +1,7 @@
+import re
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
+from langgraph.errors import GraphRecursionError
 import os
 import sys
 
@@ -178,6 +180,7 @@ if "agent_state" not in st.session_state:
         "completed_courses": [],
         "current_gpa": 4.0,
         "awaiting_prereq_confirmation": False,
+        "summary": "",
     }
 
 # ─────────────────────────────────────────────
@@ -191,6 +194,11 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# Collapse multiple blank lines into one to avoid excessive spacing in bubbles
+def fmt(text: str) -> str:
+    return re.sub(r'\n{2,}', '\n', text).strip()
+
 
 # ─────────────────────────────────────────────
 # RENDER CHAT HISTORY
@@ -206,7 +214,7 @@ for msg in st.session_state.agent_state["messages"]:
     elif isinstance(msg, AIMessage) and msg.content:
         st.markdown(f"""
         <div class="msg-row assistant">
-            <div class="bubble bot-b">{msg.content}</div>
+            <div class="bubble bot-b">{fmt(msg.content)}</div>
             <div class="avatar bot-av">🦅</div>
         </div>
         """, unsafe_allow_html=True)
@@ -227,17 +235,27 @@ if prompt := st.chat_input("Ask me about IIT courses, prerequisites, or your deg
     # Update LangGraph state
     st.session_state.agent_state["messages"].append(HumanMessage(content=prompt))
 
-    # Invoke agent
+    # Invoke agent with recursion error handling
     with st.spinner("Searching the IIT catalog…"):
-        new_state = advisor_agent.invoke(st.session_state.agent_state)
-        st.session_state.agent_state = new_state
+        try:
+            new_state = advisor_agent.invoke(
+                st.session_state.agent_state,
+                config={"recursion_limit": 8},
+            )
+            st.session_state.agent_state = new_state
+        except GraphRecursionError:
+            fallback = "I'm sorry, I wasn't able to find the information you're looking for in my catalog. Please contact the ITM department at 312.567.5290 or visit the IIT website for help with this question."
+            st.session_state.agent_state["messages"].append(
+                AIMessage(content=fallback)
+            )
+            new_state = st.session_state.agent_state
 
     # Show AI response bubble
     final_message = new_state["messages"][-1]
     if isinstance(final_message, AIMessage) and final_message.content:
         st.markdown(f"""
         <div class="msg-row assistant">
-            <div class="bubble bot-b">{final_message.content}</div>
+            <div class="bubble bot-b">{fmt(final_message.content)}</div>
             <div class="avatar bot-av">🦅</div>
         </div>
         """, unsafe_allow_html=True)

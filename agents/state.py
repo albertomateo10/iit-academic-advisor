@@ -19,6 +19,9 @@ class AcademicAdvisorState(TypedDict):
     # Optional: Track GPA if you want to enforce rules like "requires 3.0 GPA"
     current_gpa: float 
     
-    # We can use a flag to track if the agent is currently waiting for the 
+    # We can use a flag to track if the agent is currently waiting for the
     # student to answer a specific question (e.g., "Did you take ITM 311?")
     awaiting_prereq_confirmation: bool
+
+    # Reserved for future conversation summary to enable long-term memory
+    summary: str

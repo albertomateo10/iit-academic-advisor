@@ -1,8 +1,9 @@
 from typing_extensions import Optional
 
 from langchain_core.tools import tool
-# Import the raw Python function we just wrote and tested
-from agents.retrievers import search_courses
+from agents.retrievers import search_courses, search_policies
+
+
 @tool
 def search_iit_courses_tool(query: str, required_credits: Optional[str] = None) -> str:
     """
@@ -19,8 +20,17 @@ def search_iit_courses_tool(query: str, required_credits: Optional[str] = None) 
         str: A formatted string containing matching courses, their descriptions, credits, and REQUIRED PREREQUISITES. 
         PAY STRICT ATTENTION TO THE PREREQUISITES FIELD IN THE RETURNED TEXT.
     """
-    # Simply pass the LLM's arguments down to your tested Elasticsearch function
     return search_courses(query=query, required_credits=required_credits)
 
-# We define a list of tools that we will eventually bind to the LLM
-agent_tools = [search_iit_courses_tool]
+
+@tool
+def search_iit_policies_tool(query: str) -> str:
+    """Search IIT academic policies on admissions, degree programs, and certificates.
+
+    Args:
+        query: Topic to search (e.g., "admission requirements", "MS ITM degree").
+    """
+    return search_policies(query=query)
+
+
+agent_tools = [search_iit_courses_tool, search_iit_policies_tool]
