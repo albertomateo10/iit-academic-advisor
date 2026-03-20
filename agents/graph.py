@@ -8,35 +8,39 @@ from langchain_groq import ChatGroq
 
 # Import the State and Tools we just built
 from agents.state import AcademicAdvisorState
-from agents.tools import search_iit_courses_tool, search_iit_policies_tool
+from agents.tools import search_iit_courses_tool, search_iit_policies_tool, search_iit_programs_tool
 
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # 1. Initialize the LLM 
 llm = ChatGroq(
-    # model="llama-3.1-8b-instant",
+    model="llama-3.3-70b-versatile",
     # model="qwen/qwen3-32b",
-    model="meta-llama/llama-4-scout-17b-16e-instruct",
+    # model="meta-llama/llama-4-scout-17b-16e-instruct",
     api_key=GROQ_API_KEY,
     temperature=0.1
 )
 
 # 2. Bind the tools to the LLM so it knows what "Hands" it has
-tools = [search_iit_courses_tool, search_iit_policies_tool]
+tools = [search_iit_courses_tool, search_iit_policies_tool, search_iit_programs_tool]
 llm_with_tools = llm.bind_tools(tools)
 
 ADVISOR_SYSTEM_PROMPT = """You are the Proactive Academic Advisor for the ITM department at the Illinois Institute of Technology (IIT).
 Assist students with courses, prerequisites, policies, and certificates.
 
 PERFORMANCE & TOOL RULES (CRITICAL):
-- ALWAYS use the `search_iit_courses_tool` to look up courses. DO NOT guess or hallucinate course codes, credits, or prerequisites.
-- ALWAYS use the `search_iit_policies_tool` to look up policies, degree programs, and certificates. DO NOT guess or hallucinate policy information.
+- ALWAYS use `search_iit_courses_tool` to look up specific classes (e.g., "What is ITM 501?").
+- ALWAYS use `search_iit_programs_tool` to look up SPECIFIC degrees or certificates (e.g., "What are the core courses for the Master of Cyber Security?").
+- ALWAYS use `search_iit_policies_tool` to look up GENERAL department rules, admissions, or broad guidelines. DO NOT use this for specific degree requirements.
+- DO NOT guess or hallucinate course codes, credits, or policies.
 - You are STRICTLY an academic advisor for IIT. If a student asks about topics unrelated to IIT, the ITM department, courses, or academic advising (e.g., general trivia, writing essays, recipes, coding help), you MUST politely refuse to answer. Steer the conversation back to academic advising.
+- TOOL CALLING BEHAVIOR: If you need to use a tool to look up information, output ONLY the tool call. Do not include any conversational preamble or text before the tool call. When providing your final answer to the student, use plain text and standard Markdown, and NEVER output raw JSON brackets.
+- FORMATTING RULES: When a student asks about course requirements, core courses, or electives, you MUST output the curriculum as a clean Markdown table (e.g., | Course Code | Course Name | Credits |). DO NOT convert curriculum tables into giant bulleted lists.
 
 PREREQUISITE LOGIC:
 - Check the `Prerequisite Details` for "AND" (must complete all) or "OR" (needs only one).
-- If a prerequisite exists, check the student's 'completed_courses' list in your memory using the correct AND/OR logic. If the required prerequisite is NOT in their completed courses, DO NOT tell them they can enroll. Instead, pause and ask: "I see [Course] requires [Prerequisite]. Have you completed it?"
+- If a prerequisite exists, check the student's 'completed_courses' list in your memory using the correct AND/OR logic. 
 - If they lack a requirement, do NOT confirm enrollment. Pause and ask: "I see [Course] requires [Prerequisite]. Have you completed it?"
 - If a course has no prerequisites, explicitly state it.
 
@@ -148,30 +152,30 @@ advisor_agent = workflow.compile()
 
 
 
-# if __name__ == "__main__":
-#     print("Welcome to the IIT Proactive Advisor CLI!")
+if __name__ == "__main__":
+    print("Welcome to the IIT Proactive Advisor CLI!")
     
-#     # Initialize an empty state for a new student
-#     initial_state = {
-#         "messages": [],
-#         "completed_courses": [],
-#         "current_gpa": 4.0,
-#         "awaiting_prereq_confirmation": False
-#     }
+    # Initialize an empty state for a new student
+    initial_state = {
+        "messages": [],
+        "completed_courses": [],
+        "current_gpa": 4.0,
+        "awaiting_prereq_confirmation": False
+    }
     
-#     while True:
-#         user_input = input("\nYou: ")
-#         if user_input.lower() in ["quit", "exit"]:
-#             break
+    while True:
+        user_input = input("\nYou: ")
+        if user_input.lower() in ["quit", "exit"]:
+            break
             
-#         initial_state["messages"].append(HumanMessage(content=user_input))
+        initial_state["messages"].append(HumanMessage(content=user_input))
         
-#         # Run the LangGraph state machine
-#         result = advisor_agent.invoke(initial_state)
+        # Run the LangGraph state machine
+        result = advisor_agent.invoke(initial_state)
         
-#         # Get the final response from the agent
-#         final_message = result["messages"][-1].content
-#         print(f"\nAdvisor: {final_message}")
+        # Get the final response from the agent
+        final_message = result["messages"][-1].content
+        print(f"\nAdvisor: {final_message}")
         
-#         # Update our running state
-#         initial_state["messages"] = result["messages"]
+        # Update our running state
+        initial_state["messages"] = result["messages"]

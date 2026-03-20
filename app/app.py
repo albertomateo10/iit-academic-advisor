@@ -211,7 +211,7 @@ for msg in st.session_state.agent_state["messages"]:
             <div class="bubble user-b">{msg.content}</div>
         </div>
         """, unsafe_allow_html=True)
-    elif isinstance(msg, AIMessage) and msg.content:
+    elif isinstance(msg, AIMessage) and msg.content and not msg.tool_calls:
         st.markdown(f"""
         <div class="msg-row assistant">
             <div class="bubble bot-b">{fmt(msg.content)}</div>

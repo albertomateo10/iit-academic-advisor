@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
+from typing import Optional
 from langchain_huggingface import HuggingFaceEmbeddings
 
 load_dotenv()
@@ -77,12 +78,13 @@ def search_courses(query: str, required_credits: str = None, top_k: int = 3):
     return "\n---\n".join(results) if results else "No matching courses found."
 
 
-def search_policies(query: str, top_k: int = 2):
+def search_policies(query: str, department: Optional[str] = None, top_k: int = 2):
     """
-    Executes a Hybrid Search for IIT academic policies.
+    Executes a Hybrid Search for IIT academic policies, optionally filtered by department.
     """
     query_vector = embedder.embed_query(query)
 
+    # --- 1. Vector Search (kNN) with optional filter ---
     knn_query = {
         "field": "content_vector",
         "query_vector": query_vector,
@@ -90,20 +92,27 @@ def search_policies(query: str, top_k: int = 2):
         "num_candidates": 50,
         "boost": 0.7,
     }
+    # If the LLM specifies a department, force Elasticsearch to strictly filter for it
+    if department:
+        knn_query["filter"] = {"term": {"department": department}}
 
+    # --- 2. Text Search (BM25) with optional filter ---
     text_query = {
         "bool": {
             "should": [
                 {
                     "multi_match": {
                         "query": query,
-                        "fields": ["tab_name^10","content_markdown^2"],
+                        "fields": ["tab_name^10", "content_markdown^2"],
                         "boost": 0.3,
                     }
                 }
             ]
         }
     }
+    # Apply the same strict filter to the text search
+    if department:
+        text_query["bool"]["filter"] = [{"term": {"department": department}}]
 
     response = es.search(
         index="iit_policies",
@@ -112,14 +121,78 @@ def search_policies(query: str, top_k: int = 2):
         size=top_k,
     )
 
+    # --- 3. Format Output for the LLM ---
     results = []
     for hit in response["hits"]["hits"]:
         source = hit["_source"]
+        dept_val = source.get('department', 'General')
+        tab_val = source.get('tab_name', 'Policy')
+        url_val = source.get('url', 'No URL available')
+        content = source.get('content_markdown', '')
+        
+        # Inject context so the LLM knows exactly what department it is reading
         results.append(
-            f"[{source.get('tab_name', 'Policy')}]\n{source.get('content_markdown', '')}"
+            f"[{dept_val} Department - {tab_val}]\nSource URL: {url_val}\n{content}"
         )
 
-    return "\n---\n".join(results) if results else "No matching policies found."
+    return "\n---\n".join(results) if results else f"No matching policies found for query: '{query}'."
+
+def retrieve_program_info(query: str, department: Optional[str] = None, program_name: Optional[str] = None, top_k: int = 5) -> str:
+    """Queries the iit_programs index for specific degree information."""
+    
+    # 1. Embed the search query
+    query_vector = embedder.embed_query(query)
+    
+    # 2. Build exact-match filters (The beauty of your 'keyword' schema!)
+    filter_clauses = []
+    if department:
+        filter_clauses.append({"term": {"department": department}})
+    if program_name:
+        # Using a match query here in case the LLM slightly misspells the program name
+        filter_clauses.append({"match": {"program_name": program_name}})
+        
+    # 3. Construct the k-NN vector search query
+    es_query = {
+        "knn": {
+            "field": "content_vector",
+            "query_vector": query_vector,
+            "k": top_k,
+            "num_candidates": 50
+        }
+    }
+    
+    # Apply filters if the LLM provided any
+    if filter_clauses:
+        es_query["knn"]["filter"] = {
+            "bool": {
+                "must": filter_clauses
+            }
+        }
+        
+    try:
+        response = es.search(index="iit_programs", body=es_query)
+        hits = response["hits"]["hits"]
+        
+        if not hits:
+            return f"No specific program information found for query: '{query}'."
+            
+        # 4. Format the results cleanly for the LLM
+        formatted_results = []
+        for hit in hits:
+            source = hit["_source"]
+            doc = (
+                f"Program: {source.get('program_name')} ({source.get('degree_level')})\n"
+                f"Department: {source.get('department')}\n"
+                f"Tab/Section: {source.get('tab_name')}\n"
+                f"Source URL: {source.get('url')}\n"
+                f"Content:\n{source.get('content_markdown')}\n"
+            )
+            formatted_results.append(doc)
+            
+        return "\n---\n".join(formatted_results)
+        
+    except Exception as e:
+        return f"Database error while searching programs: {str(e)}"
 
 # if __name__ == "__main__":
 #     print("Testing Hybrid Search...")
