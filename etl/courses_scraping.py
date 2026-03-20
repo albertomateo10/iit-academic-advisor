@@ -201,7 +201,8 @@ async def main():
         "https://catalog.iit.edu/graduate/courses/ssb/",
         "https://catalog.iit.edu/graduate/courses/sam/",
         "https://catalog.iit.edu/graduate/courses/smgt/",
-        "https://catalog.iit.edu/graduate/courses/tech/"
+        "https://catalog.iit.edu/graduate/courses/tech/",
+        "https://catalog.iit.edu/graduate/colleges/computing/information-technology-management/#coursestext"
     ]
     
     # 1. Run the safe ETL process
