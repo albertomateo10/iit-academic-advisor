@@ -3,7 +3,9 @@
         "properties": {
             "chunk_id": { "type": "keyword" },
             "document_type": { "type": "keyword" },
-            "department": { "type": "keyword" }, 
+            "department": { "type": "keyword" },
+            "degree_level": { "type": "keyword" },
+            "program_name": { "type": "keyword" },
             "tab_name": { "type": "keyword" },
             "url": { "type": "keyword" },
             "content_markdown": { "type": "text" },
