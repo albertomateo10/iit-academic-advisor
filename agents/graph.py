@@ -5,28 +5,38 @@ from langchain_core.messages import SystemMessage, HumanMessage, trim_messages
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_groq import ChatGroq
+from langchain_anthropic import ChatAnthropic
 
 # Import the State and Tools we just built
 from agents.state import AcademicAdvisorState
 from agents.tools import search_iit_courses_tool, search_iit_policies_tool, search_iit_programs_tool
 
 load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# 1. Initialize the LLM 
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    # model="qwen/qwen3-32b",
-    # model="meta-llama/llama-4-scout-17b-16e-instruct",
-    api_key=GROQ_API_KEY,
-    temperature=0.1
+# GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# # 1. Initialize the LLM 
+# llm = ChatGroq(
+#     model="llama-3.3-70b-versatile",
+#     # model="qwen/qwen3-32b",
+#     # model="meta-llama/llama-4-scout-17b-16e-instruct",
+#     api_key=GROQ_API_KEY,
+#     temperature=0.1
+# )
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+# 1. Initialize the LLM with Claude
+llm = ChatAnthropic(
+    # model="claude-sonnet-4-20250514", 
+    model="claude-haiku-4-5-20251001",
+    api_key=ANTHROPIC_API_KEY,
+    temperature=0.1,
+    max_tokens=1024
 )
 
 # 2. Bind the tools to the LLM so it knows what "Hands" it has
 tools = [search_iit_courses_tool, search_iit_policies_tool, search_iit_programs_tool]
 llm_with_tools = llm.bind_tools(tools)
 
-ADVISOR_SYSTEM_PROMPT = """You are the Proactive Academic Advisor for the ITM department at the Illinois Institute of Technology (IIT).
+ADVISOR_SYSTEM_PROMPT = """You are the Proactive Academic Advisor at the Illinois Institute of Technology (IIT).
 Assist students with courses, prerequisites, policies, and certificates.
 
 PERFORMANCE & TOOL RULES (CRITICAL):
@@ -109,7 +119,7 @@ def call_model(state: AcademicAdvisorState):
     # Trim message history to prevent context window overflow
     trimmed = trim_messages(
         messages,
-        max_tokens=24000,
+        max_tokens=3000,
         token_counter="approximate",
         strategy="last",
         include_system=True,
