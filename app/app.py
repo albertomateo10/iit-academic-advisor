@@ -115,7 +115,30 @@ html, body, [class*="css"] {
     font-size: 0.88rem;
     line-height: 1.55;
     word-wrap: break-word;
-    white-space: pre-wrap;
+}
+
+.bubble p { 
+    margin-top: 0; 
+    margin-bottom: 0.6rem; 
+}
+.bubble h1, .bubble h2, .bubble h3 { 
+    margin-top: 0.8rem; 
+    margin-bottom: 0.4rem; 
+    line-height: 1.2;
+}
+.bubble h1 { font-size: 1.25rem; }
+.bubble h2 { font-size: 1.15rem; }
+.bubble h3 { font-size: 1.05rem; }
+.bubble ul, .bubble ol { 
+    margin-top: 0; 
+    margin-bottom: 0.6rem; 
+    padding-left: 1.2rem; 
+}
+.bubble li { 
+    margin-bottom: 0.2rem; 
+}
+.bubble > :last-child { 
+    margin-bottom: 0; 
 }
 
 /* Light mode */
@@ -200,7 +223,7 @@ st.markdown("""
 def fmt(text: str) -> str:
     if not text:
         return ""
-    html_text = markdown.markdown(text, extensions=['extra', 'nl2br'])
+    html_text = markdown.markdown(text, extensions=['extra'])
     return html_text
 
 # ─────────────────────────────────────────────
