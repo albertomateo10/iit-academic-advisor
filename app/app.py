@@ -2,6 +2,7 @@ import re
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.errors import GraphRecursionError
+import markdown
 import os
 import sys
 
@@ -197,8 +198,10 @@ st.markdown("""
 
 # Collapse multiple blank lines into one to avoid excessive spacing in bubbles
 def fmt(text: str) -> str:
-    return re.sub(r'\n{2,}', '\n', text).strip()
-
+    if not text:
+        return ""
+    html_text = markdown.markdown(text, extensions=['extra', 'nl2br'])
+    return html_text
 
 # ─────────────────────────────────────────────
 # RENDER CHAT HISTORY

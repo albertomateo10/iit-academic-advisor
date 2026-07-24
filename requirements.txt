@@ -12,3 +12,4 @@ sentence-transformers
 langchain-groq
 streamlit
 langchain-anthropic
+markdown

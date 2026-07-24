@@ -9,11 +9,12 @@ def search_iit_courses_tool(query: str, required_credits: Optional[str] = None) 
     """
     Search the Illinois Institute of Technology (IIT) course catalog.
     
-    Use this tool WHENEVER a student asks about specific courses, topics of study, 
-    or prerequisites. It performs a semantic search against the official catalog.
+    Use this tool to look up ANY course code (e.g., "CS 584", "BIOL 503", "ITM 501"), 
+    course descriptions, credits, or prerequisites for ANY department at the university.
+    DO NOT assume you only have access to CS or ITM courses. You have access to all of them.
     
     Args:
-        query (str): The natural language topic, course code, or concept to search for (e.g., "Cloud computing", "ITM 540").
+        query (str): The natural language topic, course code, or concept to search for (e.g., "Cloud computing", "BIOL 503").
         required_credits (str, optional): Use ONLY if the student specifically asks for a course with an exact number of credits (e.g., "3").
         
     Returns:
