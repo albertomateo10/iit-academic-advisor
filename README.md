@@ -255,10 +255,10 @@ curl -u elastic:your_password http://localhost:9200/_cat/indices?v
 
 ## License
 
-[Choose a license and state it here.]
+This project is licensed under the MIT License.
 
 ---
 
 ## Acknowledgements
 
-Developed as a Master's Thesis (TFM) for a double degree master's program, the European Master in Software Engineering (UPM) and a Master in Artificial Intelligence (Illinois Institute of Technology), under the supervision of Dr. Yong Zheng at IIT.
+Developed as a Master's Thesis (TFM) for a double degree master's program, the European Master in Software Engineering (UPM) and a Master in Artificial Intelligence (Illinois Institute of Technology).
