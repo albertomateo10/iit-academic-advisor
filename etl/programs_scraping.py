@@ -155,7 +155,7 @@ async def main():
             "certs_container": "#certificatestextcontainer"
         },
         {
-            "department": "Computer_Science",
+            "department": "Applied_Mathematics",
             # We use the clean base URL without the #hash tags here
             "base_url": "https://catalog.iit.edu/graduate/colleges/computing/applied-mathematics/",
             # The CSS IDs you provided

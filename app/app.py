@@ -213,8 +213,8 @@ if "agent_state" not in st.session_state:
 st.markdown("""
 <div class="iit-header">
     <div class="iit-header-text">
-        <h1>🦅 ITM Academic Advisor &mdash; Illinois Tech</h1>
-        <p>Ask me about courses, prerequisites, or your degree roadmap.</p>
+        <h1>🦅 Academic Advisor &mdash; Illinois Institute of Technology</h1>
+        <p>Ask me about courses, prerequisites, policies or your degree roadmap.</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -266,7 +266,7 @@ if prompt := st.chat_input("Ask me about IIT courses, prerequisites, or your deg
         try:
             new_state = advisor_agent.invoke(
                 st.session_state.agent_state,
-                config={"recursion_limit": 8},
+                config={"recursion_limit": 20},
             )
             st.session_state.agent_state = new_state
         except GraphRecursionError:
